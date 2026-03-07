@@ -6,11 +6,12 @@ from io import BytesIO
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.http import JsonResponse, HttpResponse, FileResponse
+from django.core.files.base import ContentFile
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from .models import HelpTicket
+from .models import HelpTicket, GeneratedReport, Report, Verification
 
 try:
     from reportlab.platypus import (
@@ -19,10 +20,12 @@ try:
         Spacer,
         Table,
         TableStyle,
+        Image as RLImage,
     )
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib import colors
     from reportlab.lib.units import inch
+    from reportlab.lib.utils import ImageReader
     HAS_REPORTLAB = True
 except ImportError:
     HAS_REPORTLAB = False
@@ -269,9 +272,13 @@ def download_report(request):
         result = "UNKNOWN"
 
     confidence = _parse_confidence(request.POST.get("confidence", "0%"))
+    source_file_name = _sanitize_text(request.POST.get("file", ""), 120)
     username = _sanitize_text(request.user.username, 60) if request.user.is_authenticated else "Guest"
     if not username:
         username = "Guest"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    response_filename = "currency_report.pdf"
+    stored_filename = f"currency_report_{timestamp}.pdf"
 
     if not HAS_REPORTLAB:
         lines = [
@@ -282,8 +289,17 @@ def download_report(request):
             "Model Used: Deep Learning CNN Model",
         ]
         pdf_bytes = _build_simple_pdf(lines)
+
+        report = GeneratedReport.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            result=result,
+            confidence=confidence,
+            source_file=source_file_name,
+        )
+        report.pdf_file.save(stored_filename, ContentFile(pdf_bytes), save=True)
+
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="currency_report.pdf"'
+        response["Content-Disposition"] = f'attachment; filename="{response_filename}"'
         return response
 
     buffer = BytesIO()
@@ -328,6 +344,28 @@ def download_report(request):
     elements.append(table)
     elements.append(Spacer(1, 0.5 * inch))
 
+    report_image = request.FILES.get("image")
+    if report_image:
+        try:
+            image_bytes = report_image.read()
+            image_buffer = BytesIO(image_bytes)
+            image_reader = ImageReader(image_buffer)
+            img_width, img_height = image_reader.getSize()
+            max_width = 5.5 * inch
+            max_height = 2.8 * inch
+            scale = min(max_width / img_width, max_height / img_height, 1.0)
+            image_buffer.seek(0)
+            pdf_image = RLImage(image_buffer)
+            pdf_image.drawWidth = img_width * scale
+            pdf_image.drawHeight = img_height * scale
+            elements.append(Paragraph("<b>Analyzed Currency Note</b>", styles["Heading3"]))
+            elements.append(Spacer(1, 0.15 * inch))
+            elements.append(pdf_image)
+            elements.append(Spacer(1, 0.35 * inch))
+        except Exception:
+            elements.append(Paragraph("Analyzed Currency Note: Could not render image in report.", styles["Normal"]))
+            elements.append(Spacer(1, 0.2 * inch))
+
     # ===== FOOTER =====
     elements.append(Paragraph(
         "This report was generated using AI-powered currency authentication system.",
@@ -341,5 +379,124 @@ def download_report(request):
 
     doc.build(elements)
     buffer.seek(0)
+    pdf_bytes = buffer.getvalue()
 
-    return FileResponse(buffer, as_attachment=True, filename="currency_report.pdf")
+    report = GeneratedReport.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        result=result,
+        confidence=confidence,
+        source_file=source_file_name,
+    )
+    report.pdf_file.save(stored_filename, ContentFile(pdf_bytes), save=True)
+
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{response_filename}"'
+    return response
+
+
+@require_GET
+def report_history(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    generated_reports = GeneratedReport.objects.filter(user=request.user).order_by("-created_at")[:100]
+    legacy_reports = Report.objects.filter(verification__user=request.user).select_related("verification", "verification__user").order_by("-created_at")[:100]
+
+    combined = []
+
+    for item in generated_reports:
+        combined.append({
+            "id": item.id,
+            "report_type": "generated",
+            "result": item.result,
+            "confidence": item.confidence,
+            "source_file": item.source_file or "N/A",
+            "created_at": item.created_at,
+            "download_url": item.pdf_file.url if item.pdf_file else "",
+            "owner": item.user.username if item.user else "Guest",
+        })
+
+    for item in legacy_reports:
+        source_file = item.verification.image.name.rsplit("/", 1)[-1] if item.verification.image else "N/A"
+        combined.append({
+            "id": item.id,
+            "report_type": "legacy",
+            "result": item.verification.result,
+            "confidence": f"{float(item.verification.confidence):.2f}%",
+            "source_file": source_file,
+            "created_at": item.created_at,
+            "download_url": item.pdf_file.url if item.pdf_file else "",
+            "owner": item.verification.user.username if item.verification.user else "Guest",
+        })
+
+    combined.sort(key=lambda entry: entry["created_at"], reverse=True)
+    return JsonResponse(combined[:50], safe=False)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def history_delete_item(request, item_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    deleted, _ = Verification.objects.filter(id=item_id, user=request.user).delete()
+    if deleted == 0:
+        return JsonResponse({"error": "History item not found"}, status=404)
+    return JsonResponse({"ok": True})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def history_clear(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    deleted_count, _ = Verification.objects.filter(user=request.user).delete()
+    return JsonResponse({"ok": True, "deleted": deleted_count})
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def report_history_delete_item(request, item_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    report_type = (request.GET.get("type") or "").strip().lower()
+    if report_type == "legacy":
+        deleted, _ = Report.objects.filter(id=item_id, verification__user=request.user).delete()
+    else:
+        deleted, _ = GeneratedReport.objects.filter(id=item_id, user=request.user).delete()
+
+    if deleted == 0:
+        return JsonResponse({"error": "Report item not found"}, status=404)
+    return JsonResponse({"ok": True})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def report_history_clear(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    deleted_generated, _ = GeneratedReport.objects.filter(user=request.user).delete()
+    deleted_legacy, _ = Report.objects.filter(verification__user=request.user).delete()
+    return JsonResponse({"ok": True, "deleted": deleted_generated + deleted_legacy})
+
+
+@require_GET
+def history_view(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    history = Verification.objects.filter(user=request.user).order_by("-created_at")[:100]
+    data = []
+    for item in history:
+        data.append({
+            "id": item.id,
+            "result": item.result,
+            "confidence": f"{float(item.confidence):.2f}%",
+            "created_at": item.created_at,
+            "image_url": request.build_absolute_uri(item.image.url) if item.image else "",
+        })
+
+    return JsonResponse(data, safe=False)

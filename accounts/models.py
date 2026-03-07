@@ -43,3 +43,19 @@ class FakeNoteReport(HelpTicket):
         proxy = True
         verbose_name = "Fake Note Report"
         verbose_name_plural = "Fake Note Reports"
+
+
+class GeneratedReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="generated_reports")
+    result = models.CharField(max_length=10)
+    confidence = models.CharField(max_length=20)
+    source_file = models.CharField(max_length=120, blank=True)
+    pdf_file = models.FileField(upload_to="reports/generated/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        owner = self.user.username if self.user else "Guest"
+        return f"{owner} - {self.result} - {self.created_at:%Y-%m-%d %H:%M:%S}"
