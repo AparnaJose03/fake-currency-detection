@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help | Fake Currency Detection</title>
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+<!-- Optional login protection (same as your other pages) -->
+<script>
+  if (!localStorage.getItem("isLoggedIn")) {
+    window.location.href = "login.html";
+  }
+</script>
+
+<header class="navbar">
+  <div class="brand">
+    <img src="logo.png" alt="Logo">
+    <span>Fake Currency Detection</span>
+  </div>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="safety.html">Safety & Awareness</a>
+    <a href="history.html">History</a>
+    <a href="report.html">Report</a>
+    <a href="help.html" class="active">Help</a>
+    <a href="profile.html" class="profile">Profile</a>
+    <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+  </nav>
+</header>
+
+<section class="page-hero">
+  <span class="hero-tag">Support Center</span>
+  <h1 class="page-title">Help</h1>
+  <p class="page-sub">
+    Quick fixes, result explanations, and a support form if you face any issues.
+  </p>
+</section>
+
+<section class="content-wrap">
+
+  <!-- QUICK TROUBLESHOOTING -->
+  <div class="card">
+    <h2>Quick Troubleshooting</h2>
+    <p class="muted">Most common issues and how to fix them.</p>
+
+    <button class="accordion" type="button">Upload button does nothing</button>
+    <div class="panel">
+      <p>
+        Make sure you clicked the <b>Upload Image</b> button (not the page background).
+        Try refreshing the page. If you are using Live Server, ensure the browser allows file selection.
+      </p>
+    </div>
+
+    <button class="accordion" type="button">Result is not showing after upload</button>
+    <div class="panel">
+      <p>
+        Use a clear photo (no blur). Ensure the file is <b>JPG/PNG</b>. If the image is too dark or cropped,
+        the analysis may fail or confidence may be low.
+      </p>
+    </div>
+
+    <button class="accordion" type="button">Confidence is low</button>
+    <div class="panel">
+      <p>
+        Low confidence usually means the image quality is poor (glare, shadows, angle, low resolution).
+        Retake the image using the checklist below and upload again.
+      </p>
+    </div>
+
+    <button class="accordion" type="button">Report download is not available</button>
+    <div class="panel">
+      <p>
+        The PDF report is generated only after analysis completes. If you are using a demo mode,
+        the report button may show without creating a real PDF. In backend integration,
+        the report will be enabled only after the server creates it.
+      </p>
+    </div>
+  </div>
+
+  <!-- ACCURACY ASSISTANT -->
+  <div class="card">
+    <h2>Accuracy Assistant (Before You Upload)</h2>
+    <p class="muted">Follow this checklist to get the best AI accuracy.</p>
+
+    <div class="grid-3">
+      <div class="mini">
+        <h3>Lighting</h3>
+        <p>Use bright, even light. Avoid flash glare and strong shadows.</p>
+      </div>
+      <div class="mini">
+        <h3>Full Note</h3>
+        <p>Capture the full note with corners visible. Do not crop.</p>
+      </div>
+      <div class="mini">
+        <h3>Sharp Image</h3>
+        <p>Keep camera steady. Use higher resolution for clear security features.</p>
+      </div>
+    </div>
+
+    <div class="quality-callout">
+      <div class="q-left">
+        <div class="q-icon">✅</div>
+        <div>
+          <div class="q-title">Simple Rule</div>
+          <div class="q-text">If text/details are not readable to you, the AI will also struggle.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT EXPLANATION -->
+  <div class="card">
+    <h2>Understanding Your Result</h2>
+    <div class="grid-2">
+      <div class="mini">
+        <h3>What “FAKE” indicates</h3>
+        <p>
+          The system found strong signs that the note may be counterfeit.
+          Do not circulate it. Use manual checks and verify via official channels if needed.
+        </p>
+      </div>
+      <div class="mini">
+        <h3>What “Confidence” means</h3>
+        <p>
+          Confidence is how strongly the AI model matches the image to learned patterns.
+          Low confidence usually means poor image quality or unclear security features.
+        </p>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <b>Note:</b> This tool supports verification and awareness. For final confirmation, consult official channels.
+    </div>
+  </div>
+
+  <!-- SUPPORT / FEEDBACK FORM (frontend now, DB later) -->
+  <div class="card">
+    <h2>Contact Support</h2>
+    <p class="muted">
+      If you face repeated issues, submit details here. (Later we will save this to the database via Django.)
+    </p>
+
+    <form id="helpForm" style="margin-top:14px;">
+      <div class="grid-2">
+        <div>
+          <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Name</label>
+          <input id="helpName" required
+                 style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none;">
+        </div>
+
+        <div>
+          <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Email</label>
+          <input id="helpEmail" type="email" required
+                 style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none;">
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Issue</label>
+        <select id="helpIssue"
+                style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none;">
+          <option>Upload problem</option>
+          <option>No result / stuck in processing</option>
+          <option>Low confidence</option>
+          <option>Report download issue</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Message</label>
+        <textarea id="helpMsg" required rows="4"
+                  style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none; resize:vertical;"></textarea>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button class="secondary-btn" type="submit">Submit</button>
+        <div id="helpStatus" class="muted" style="font-size:13px;"></div>
+      </div>
+    </form>
+  </div>
+
+</section>
+
+<footer>
+  © 2026 Fake Currency Detection System | Final Year Project
+</footer>
+
+<script>
+  const helpForm = document.getElementById("helpForm");
+  const helpStatus = document.getElementById("helpStatus");
+
+  helpForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      name: document.getElementById("helpName").value,
+      email: document.getElementById("helpEmail").value,
+      topic: document.getElementById("helpIssue").value,   // your select
+      message: document.getElementById("helpMsg").value
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/help/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        helpStatus.textContent = data.error || "Failed to submit.";
+        return;
+      }
+
+      helpStatus.textContent = "Submitted successfully. Ticket ID: " + data.ticket_id;
+      helpForm.reset();
+
+      setTimeout(() => helpStatus.textContent = "", 4000);
+
+    } catch (err) {
+      helpStatus.textContent = "Backend not reachable. Start Django server.";
+    }
+  });
+  document.querySelectorAll(".accordion").forEach(btn => {
+    btn.addEventListener("click", function () {
+
+      this.classList.toggle("active");
+
+      const panel = this.nextElementSibling;
+
+      if (panel.style.maxHeight) {
+        panel.style.maxHeight = null;
+      } else {
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      }
+    });
+  });
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+
+  await fetch("http://127.0.0.1:8000/api/logout/", {
+    method: "GET",
+    credentials: "include"
+  });
+
+  localStorage.removeItem("isLoggedIn");
+  window.location.href = "login.html";
+});
+</script>
+
+
+</body>
+</html>

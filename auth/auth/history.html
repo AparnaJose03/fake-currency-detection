@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History | Fake Currency Detection</title>
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+<script>
+  if (!localStorage.getItem("isLoggedIn")) window.location.href = "login.html";
+</script>
+
+<header class="navbar">
+  <div class="brand">
+    <img src="logo.png" alt="Logo">
+    <span>Fake Currency Detection</span>
+  </div>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="safety.html">Safety & Awareness</a>
+    <a href="history.html" class="active">History</a>
+    <a href="report.html">Report</a>
+    <a href="help.html">Help</a>
+    <a href="profile.html" class="profile">Profile</a>
+    <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+  </nav>
+</header>
+
+<section class="page-hero">
+  <span class="hero-tag">Your Activity</span>
+  <h1 class="page-title">Upload History</h1>
+  <p class="page-sub">All your past uploaded notes and AI results.</p>
+</section>
+
+<section class="content-wrap">
+  <div class="card">
+    <div class="section-head">
+      <h2>Recent Verifications</h2>
+      <button class="danger-btn" id="clearVerificationBtn" type="button">Clear All</button>
+    </div>
+    <p class="muted" id="statusText">Loading...</p>
+
+    <div class="history-grid" id="historyGrid"></div>
+  </div>
+
+  <div class="card" style="margin-top:18px;">
+    <div class="section-head">
+      <h2>Generated PDF Reports</h2>
+      <button class="danger-btn" id="clearReportsBtn" type="button">Clear All</button>
+    </div>
+    <p class="muted" id="reportStatusText">Loading...</p>
+    <div id="reportHistoryList"></div>
+  </div>
+</section>
+
+<footer>&copy; 2026 Fake Currency Detection System | Final Year Project</footer>
+
+<script>
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    await fetch("http://127.0.0.1:8000/api/logout/", {
+      method: "GET",
+      credentials: "include"
+    });
+
+    localStorage.removeItem("isLoggedIn");
+    window.location.href = "login.html";
+  });
+
+  async function deleteVerificationItem(itemId) {
+    const res = await fetch(`http://127.0.0.1:8000/api/history/${itemId}/`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    if (!res.ok) {
+      let message = "Unable to delete history item.";
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (e) {}
+      throw new Error(message);
+    }
+  }
+
+  async function clearVerificationHistory() {
+    const res = await fetch("http://127.0.0.1:8000/api/history/clear/", {
+      method: "POST",
+      credentials: "include"
+    });
+    if (!res.ok) {
+      let message = "Unable to clear verification history.";
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (e) {}
+      throw new Error(message);
+    }
+  }
+
+  async function deleteReportItem(itemId, reportType) {
+    const type = encodeURIComponent(reportType || "generated");
+    const res = await fetch(`http://127.0.0.1:8000/api/report-history/${itemId}/?type=${type}`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+    if (!res.ok) {
+      let message = "Unable to delete report history item.";
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (e) {}
+      throw new Error(message);
+    }
+  }
+
+  async function clearReportHistory() {
+    const res = await fetch("http://127.0.0.1:8000/api/report-history/clear/", {
+      method: "POST",
+      credentials: "include"
+    });
+    if (!res.ok) {
+      let message = "Unable to clear report history.";
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (e) {}
+      throw new Error(message);
+    }
+  }
+
+  async function loadHistory() {
+    const status = document.getElementById("statusText");
+    const grid = document.getElementById("historyGrid");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/history/", {
+        method: "GET",
+        credentials: "include"
+      });
+
+      if (!res.ok) {
+        status.textContent = res.status === 401
+          ? "Session expired. Please login again."
+          : "Unable to load verification history.";
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.length) {
+        status.textContent = "No history found yet. Upload a note to create records.";
+        grid.innerHTML = "";
+        return;
+      }
+
+      status.textContent = "";
+      grid.innerHTML = data.map(item => `
+        <div class="history-item" data-history-id="${item.id}">
+          <div class="history-thumb">
+            ${item.image_url ? `<img src="${item.image_url}" alt="Uploaded note">` : `<div class="thumb-fallback">No Image</div>`}
+          </div>
+          <div class="history-meta">
+            <div class="history-row">
+              <span class="badge ${item.result === "FAKE" ? "badge-fake" : "badge-real"}">${item.result}</span>
+              <span class="history-date">${new Date(item.created_at).toLocaleString()}</span>
+            </div>
+            <div class="history-conf">Confidence: <b>${item.confidence}</b></div>
+            <div class="history-actions">
+              <button class="danger-btn mini-delete-btn delete-verification-btn" data-history-id="${item.id}" type="button">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    } catch (e) {
+      status.textContent = "Server not reachable. Start Django: python manage.py runserver";
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text || "";
+    return div.innerHTML;
+  }
+
+  function loadReportHistoryFromLocal() {
+    const status = document.getElementById("reportStatusText");
+    const list = document.getElementById("reportHistoryList");
+    const items = JSON.parse(localStorage.getItem("reportHistory") || "[]");
+
+    if (!items.length) {
+      status.textContent = "No fake-note reports submitted yet.";
+      list.innerHTML = "";
+      return;
+    }
+
+    status.textContent = "";
+    list.innerHTML = items.map((item) => `
+      <div class="mini-item report-history-item">
+        <div class="report-history-head">
+          <b>Ticket #${escapeHtml(String(item.ticket_id || "-"))}</b>
+          <span class="history-date">${new Date(item.created_at).toLocaleString()}</span>
+        </div>
+        <div class="report-history-result">
+          Result: <b>${escapeHtml(item.result || "-")}</b> | Confidence: <b>${escapeHtml(item.confidence || "-")}</b>
+        </div>
+        <div class="report-history-source">${escapeHtml(item.message || "-")}</div>
+      </div>
+    `).join("");
+  }
+
+  async function loadReportHistory() {
+    const status = document.getElementById("reportStatusText");
+    const list = document.getElementById("reportHistoryList");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/report-history/", {
+        method: "GET",
+        credentials: "include"
+      });
+
+      if (!res.ok) {
+        loadReportHistoryFromLocal();
+        return;
+      }
+
+      const reports = await res.json();
+      if (!Array.isArray(reports) || !reports.length) {
+        status.textContent = "No generated PDF reports yet.";
+        list.innerHTML = "";
+        return;
+      }
+
+      status.textContent = "";
+      list.innerHTML = reports.map((item) => `
+        <div class="mini-item report-history-item" data-report-id="${item.id}" data-report-type="${escapeHtml(item.report_type || "generated")}">
+          <div class="report-history-head">
+            <b>Report #${escapeHtml(String(item.id || "-"))}</b>
+            <span class="history-date">${new Date(item.created_at).toLocaleString()}</span>
+          </div>
+          <div class="report-history-result">
+            Result: <b>${escapeHtml(item.result || "-")}</b> | Confidence: <b>${escapeHtml(item.confidence || "-")}</b>
+          </div>
+          <div class="report-history-source">
+            Source File: ${escapeHtml(item.source_file || "N/A")} | Owner: ${escapeHtml(item.owner || "Guest")}
+          </div>
+          <div class="report-history-actions">
+            ${item.download_url ? `<a class="secondary-btn report-open-btn" href="http://127.0.0.1:8000${item.download_url}" target="_blank" rel="noopener">Open PDF</a>` : `<span class="muted">PDF not available</span>`}
+            <button class="danger-btn mini-delete-btn delete-report-btn" data-report-id="${item.id}" data-report-type="${escapeHtml(item.report_type || "generated")}" type="button">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    } catch (e) {
+      loadReportHistoryFromLocal();
+    }
+  }
+
+  document.getElementById("historyGrid")?.addEventListener("click", async (event) => {
+    const target = event.target.closest(".delete-verification-btn");
+    if (!target) return;
+    const itemId = target.getAttribute("data-history-id");
+    if (!itemId) return;
+    if (!window.confirm("Delete this verification from history?")) return;
+
+    target.disabled = true;
+    try {
+      await deleteVerificationItem(itemId);
+      await loadHistory();
+    } catch (e) {
+      alert(e.message || "Unable to delete history item.");
+      target.disabled = false;
+    }
+  });
+
+  document.getElementById("reportHistoryList")?.addEventListener("click", async (event) => {
+    const target = event.target.closest(".delete-report-btn");
+    if (!target) return;
+    const itemId = target.getAttribute("data-report-id");
+    const reportType = target.getAttribute("data-report-type");
+    if (!itemId) return;
+    if (!window.confirm("Delete this PDF report from history?")) return;
+
+    target.disabled = true;
+    try {
+      await deleteReportItem(itemId, reportType);
+      await loadReportHistory();
+    } catch (e) {
+      alert(e.message || "Unable to delete report item.");
+      target.disabled = false;
+    }
+  });
+
+  document.getElementById("clearVerificationBtn")?.addEventListener("click", async () => {
+    if (!window.confirm("Clear all verification history? This cannot be undone.")) return;
+    const btn = document.getElementById("clearVerificationBtn");
+    btn.disabled = true;
+    try {
+      await clearVerificationHistory();
+      await loadHistory();
+    } catch (e) {
+      alert(e.message || "Unable to clear verification history.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("clearReportsBtn")?.addEventListener("click", async () => {
+    if (!window.confirm("Clear all generated PDF report history? This cannot be undone.")) return;
+    const btn = document.getElementById("clearReportsBtn");
+    btn.disabled = true;
+    try {
+      await clearReportHistory();
+      await loadReportHistory();
+    } catch (e) {
+      alert(e.message || "Unable to clear report history.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadHistory();
+  loadReportHistory();
+</script>
+
+</body>
+</html>

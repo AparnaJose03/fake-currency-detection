@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake Currency Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<!-- ✅ LOGIN PROTECTION -->
+<script>
+  if (localStorage.getItem("isLoggedIn") !== "true") {
+    window.location.href = "login.html";
+  }
+</script>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <div class="brand">
+    <img src="logo.png" alt="Logo">
+    <span>Fake Currency Detection</span>
+  </div>
+
+  <nav>
+    <a href="index.html" class="active">Home</a>
+    <a href="safety.html">Safety & Awareness</a>
+    <a href="history.html">History</a>
+    <a href="report.html">Report</a>
+    <a href="help.html">Help</a>
+    <a href="profile.html" class="profile">Profile</a>
+    <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-tag">AI-Based Currency Verification</span>
+
+  <h1 class="hero-title">
+    Detect Fake Currency
+    <span class="accent">with Confidence</span>
+  </h1>
+
+  <p class="hero-sub">
+    Upload a currency note image to verify authenticity using deep learning
+    and security feature analysis.
+  </p>
+
+  <div class="scan-line"></div>
+</section>
+
+<!-- SIDE VISUALS -->
+<div class="side-visual left"></div>
+<div class="side-visual right"></div>
+
+<!-- AI PROCESS FLOW -->
+<section class="ai-flow">
+  <div class="flow-step active">
+    <span>1</span>
+    <p>Upload Image</p>
+  </div>
+  <div class="flow-line"></div>
+  <div class="flow-step">
+    <span>2</span>
+    <p>AI Analysis</p>
+  </div>
+  <div class="flow-line"></div>
+  <div class="flow-step">
+    <span>3</span>
+    <p>Result & Report</p>
+  </div>
+</section>
+
+<!-- UPLOAD SPOTLIGHT -->
+<section class="upload-spotlight">
+  <div class="upload-card">
+
+    <div class="upload-icon">📄</div>
+
+    <h2 class="upload-title">Upload Currency Image</h2>
+    <p class="upload-text">Upload a clear image to verify authenticity</p>
+
+    <div id="detectForm" novalidate>
+      <input type="file" id="fileInput" name="image" accept="image/*">
+      <button class="upload-btn" id="uploadBtn" type="button" disabled>Verify Image</button>
+    </div>
+
+    <p class="file-status" id="fileStatus">Choose an image file first</p>
+
+    <div class="processing" id="processing" style="display:none;">
+      🔄 Analyzing currency image...
+    </div>
+
+    <div class="result-box" id="resultBox" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <img
+          id="resultImagePreview"
+          alt="Uploaded currency note preview"
+          style="display:none;max-width:100%;max-height:240px;border-radius:10px;object-fit:contain;border:1px solid rgba(255,255,255,0.2);"
+        >
+      </div>
+      <h3 class="result-text">Result: <span class="fake">FAKE</span></h3>
+      <p class="confidence">Confidence: 94%</p>
+      <div class="result-details-wrap" id="resultDetailsWrap" style="display:none;">
+        <button class="details-toggle-btn" id="detailsToggleBtn" type="button" aria-expanded="false">Show details</button>
+        <div class="details-panel" id="detailsPanel" style="display:none;">
+          <div class="classifier-summary" id="classifierSummary" style="display:none;">
+            <h4>Classifier Scores (decision basis)</h4>
+            <p class="classifier-line">Real: <b id="realScoreText">0.00%</b> | Fake: <b id="fakeScoreText">0.00%</b></p>
+          </div>
+          <div class="factor-summary" id="factorSummary" style="display:none;">
+            <h4>Image/Feature Visibility Indicators</h4>
+            <div id="factorList"></div>
+            <p class="factor-note">These indicators do not decide REAL/FAKE. They only reflect image and feature visibility quality.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="report-btn" id="downloadReportBtn" type="button">Download Report (PDF)</button>
+        <button class="report-btn" id="raiseFakeReportBtn" type="button">Report Fake Note</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MANUAL SUPPORT (OLD BULLET POINTS ONLY) -->
+<section class="manual-section">
+
+  <button class="manual-btn" id="manualBtn" type="button">
+    Manual Currency Identification
+  </button>
+
+  <div class="manual-card" id="manualCard">
+    <h3>How to Identify Fake Currency Manually</h3>
+
+    <ul class="manual-list">
+      <li>Check watermark clarity and position</li>
+      <li>Inspect the security thread</li>
+      <li>Observe color-changing ink</li>
+      <li>Verify micro-lettering</li>
+      <li>Check alignment and texture</li>
+    </ul>
+  </div>
+
+</section>
+
+
+
+<footer>
+  © 2026 Fake Currency Detection System | Final Year Project
+</footer>
+
+<!-- ✅ ONE CLEAN SCRIPT BLOCK -->
+<script>
+  // ===== Logout =====
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+
+  await fetch("http://127.0.0.1:8000/api/logout/", {
+    method: "GET",
+    credentials: "include"
+  });
+
+  localStorage.removeItem("isLoggedIn");
+  window.location.href = "login.html";
+});
+  // ===== Manual open/close (ONLY ONCE) =====
+  const manualBtn = document.getElementById("manualBtn");
+  const manualCard = document.getElementById("manualCard");
+  manualBtn?.addEventListener("click", () => manualCard.classList.toggle("open"));
+
+  // ===== Upload + backend connection =====
+  const uploadBtn = document.getElementById("uploadBtn");
+  const fileInput = document.getElementById("fileInput");
+  const statusText = document.getElementById("fileStatus");
+  const processing = document.getElementById("processing");
+  const resultBox = document.getElementById("resultBox");
+  const resultText = resultBox?.querySelector(".result-text span");
+  const confidenceText = resultBox?.querySelector(".confidence");
+  const resultImagePreview = document.getElementById("resultImagePreview");
+  const downloadReportBtn = document.getElementById("downloadReportBtn");
+  const raiseFakeReportBtn = document.getElementById("raiseFakeReportBtn");
+  const resultDetailsWrap = document.getElementById("resultDetailsWrap");
+  const detailsToggleBtn = document.getElementById("detailsToggleBtn");
+  const detailsPanel = document.getElementById("detailsPanel");
+  const factorSummary = document.getElementById("factorSummary");
+  const factorList = document.getElementById("factorList");
+  const classifierSummary = document.getElementById("classifierSummary");
+  const realScoreText = document.getElementById("realScoreText");
+  const fakeScoreText = document.getElementById("fakeScoreText");
+  let latestResult = "";
+  let latestConfidencePercent = "";
+  let latestFileName = "";
+  let latestPreviewUrl = "";
+  let detailsExpanded = false;
+
+  function syncDetailsState() {
+    const hasClassifier = !!(classifierSummary && classifierSummary.style.display !== "none");
+    const hasFactors = !!(factorSummary && factorSummary.style.display !== "none");
+    const hasAnyDetails = hasClassifier || hasFactors;
+    if (!resultDetailsWrap || !detailsPanel || !detailsToggleBtn) return;
+
+    if (!hasAnyDetails) {
+      resultDetailsWrap.style.display = "none";
+      detailsPanel.style.display = "none";
+      detailsToggleBtn.setAttribute("aria-expanded", "false");
+      detailsToggleBtn.textContent = "Show details";
+      detailsExpanded = false;
+      return;
+    }
+
+    resultDetailsWrap.style.display = "block";
+    detailsPanel.style.display = detailsExpanded ? "block" : "none";
+    detailsToggleBtn.setAttribute("aria-expanded", detailsExpanded ? "true" : "false");
+    detailsToggleBtn.textContent = detailsExpanded ? "Hide details" : "Show details";
+  }
+
+  function resetDetailsPanel() {
+    detailsExpanded = false;
+    syncDetailsState();
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text || "";
+    return div.innerHTML;
+  }
+
+  function renderFactors(factors) {
+    if (!factorSummary || !factorList || !Array.isArray(factors) || !factors.length) {
+      if (factorSummary) factorSummary.style.display = "none";
+      syncDetailsState();
+      return;
+    }
+
+    factorSummary.style.display = "block";
+    factorList.innerHTML = factors.map((factor) => {
+      const score = Number(factor.score || 0);
+      const safeScore = Math.max(0, Math.min(100, score));
+      const level = (factor.level || "Medium").toString();
+      const levelClass = level.toLowerCase() === "high"
+        ? "level-high"
+        : (level.toLowerCase() === "low" ? "level-low" : "level-medium");
+
+      return `
+        <div class="factor-row">
+          <div class="factor-row-head">
+            <span>${escapeHtml(factor.label || "Factor")}</span>
+            <span class="factor-level ${levelClass}">${escapeHtml(level)} - ${safeScore.toFixed(1)}%</span>
+          </div>
+          <div class="factor-track">
+            <div class="factor-fill ${levelClass}" style="width:${safeScore.toFixed(1)}%"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+    syncDetailsState();
+  }
+
+  function renderClassifierScores(classScores) {
+    if (!classifierSummary || !realScoreText || !fakeScoreText) return;
+    if (!classScores || typeof classScores !== "object") {
+      classifierSummary.style.display = "none";
+      syncDetailsState();
+      return;
+    }
+
+    const real = Number(classScores.real || 0);
+    const fake = Number(classScores.fake || 0);
+    const safeReal = Math.max(0, Math.min(100, real * 100));
+    const safeFake = Math.max(0, Math.min(100, fake * 100));
+    realScoreText.textContent = safeReal.toFixed(2) + "%";
+    fakeScoreText.textContent = safeFake.toFixed(2) + "%";
+    classifierSummary.style.display = "block";
+    syncDetailsState();
+  }
+
+  async function uploadSelectedFile(file) {
+    uploadBtn.disabled = true;
+    processing.style.display = "block";
+    resultBox.style.display = "none";
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/detect/", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || data.status !== "success") {
+        throw new Error(data.message || "Upload failed");
+      }
+
+      processing.style.display = "none";
+      resultBox.style.display = "block";
+      latestResult = (data.result || "unknown").toUpperCase();
+      latestConfidencePercent = ((data.confidence || 0) * 100).toFixed(2);
+      latestFileName = data.file || file.name || "";
+      localStorage.setItem(
+        "latestDetection",
+        JSON.stringify({
+          result: latestResult,
+          confidence: latestConfidencePercent,
+          file: latestFileName,
+          detected_at: new Date().toLocaleString()
+        })
+      );
+
+      resultText.textContent = latestResult;
+      confidenceText.textContent = "Confidence: " + latestConfidencePercent + "%";
+      resetDetailsPanel();
+      renderClassifierScores(data.class_scores || null);
+      renderFactors(data.factors || []);
+      if (resultImagePreview) {
+        if (latestPreviewUrl) {
+          URL.revokeObjectURL(latestPreviewUrl);
+        }
+        latestPreviewUrl = URL.createObjectURL(file);
+        resultImagePreview.src = latestPreviewUrl;
+        resultImagePreview.style.display = "block";
+      }
+      uploadBtn.textContent = "Verify Again";
+      uploadBtn.disabled = false;
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      processing.style.display = "none";
+      uploadBtn.disabled = false;
+      renderClassifierScores(null);
+      renderFactors([]);
+      resetDetailsPanel();
+      alert("Failed to upload image. " + err.message);
+    }
+  }
+
+  fileInput?.addEventListener("change", () => {
+    if (localStorage.getItem("isLoggedIn") !== "true") {
+      statusText.textContent = "Please login first";
+      return;
+    }
+    const selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+    if (selectedFile) {
+      statusText.textContent = "File selected: " + selectedFile.name;
+      uploadBtn.disabled = false;
+      resultBox.style.display = "none";
+      renderClassifierScores(null);
+      renderFactors([]);
+      resetDetailsPanel();
+      if (resultImagePreview) {
+        resultImagePreview.style.display = "none";
+      }
+    } else {
+      statusText.textContent = "No file selected";
+      uploadBtn.disabled = true;
+      renderClassifierScores(null);
+      renderFactors([]);
+      resetDetailsPanel();
+      if (resultImagePreview) {
+        resultImagePreview.style.display = "none";
+      }
+    }
+  });
+
+  async function handleVerify() {
+    if (localStorage.getItem("isLoggedIn") !== "true") {
+      alert("Please login first to upload images.");
+      return;
+    }
+
+    const selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+    if (!selectedFile) {
+      statusText.textContent = "No file selected";
+      alert("Please choose an image first.");
+      return;
+    }
+
+    await uploadSelectedFile(selectedFile);
+  }
+
+  uploadBtn?.addEventListener("click", async () => {
+    await handleVerify();
+  });
+
+  detailsToggleBtn?.addEventListener("click", () => {
+    detailsExpanded = !detailsExpanded;
+    syncDetailsState();
+  });
+
+
+  // ===== Report download =====
+  downloadReportBtn?.addEventListener("click", async () => {
+    if (resultBox.style.display === "none") {
+      alert("Please verify an image first.");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("result", latestResult || resultText.textContent || "UNKNOWN");
+      formData.append("confidence", latestConfidencePercent || "");
+      formData.append("file", latestFileName || (fileInput.files && fileInput.files[0] ? fileInput.files[0].name : ""));
+      if (fileInput.files && fileInput.files[0]) {
+        formData.append("image", fileInput.files[0]);
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/api/download-report/", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let message = "Failed to download report";
+        try {
+          const errorData = await response.json();
+          message = errorData.error || errorData.message || message;
+        } catch (e) {
+          // ignore parse errors and keep generic message
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const disposition = response.headers.get("Content-Disposition") || "";
+      const filenameMatch = disposition.match(/filename="?([^"]+)"?/i);
+      const downloadFileName = filenameMatch && filenameMatch[1] ? filenameMatch[1] : "currency-report.pdf";
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = downloadFileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Report download error:", err);
+      alert("Could not download report. " + err.message);
+    }
+  });
+
+  raiseFakeReportBtn?.addEventListener("click", () => {
+    const result = (latestResult || resultText.textContent || "UNKNOWN").toUpperCase();
+    if (result !== "FAKE") {
+      alert("Report is intended for suspected fake notes only.");
+      return;
+    }
+    window.location.href = "report.html";
+  });
+
+  window.addEventListener("beforeunload", () => {
+    if (latestPreviewUrl) {
+      URL.revokeObjectURL(latestPreviewUrl);
+    }
+  });
+</script>
+
+
+</body>
+</html>

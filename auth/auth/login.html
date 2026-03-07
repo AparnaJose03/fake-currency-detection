@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Fake Currency Detection</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+
+<div class="auth-page">
+  <!-- LEFT SIDE (IMAGE) -->
+  <aside class="auth-side">
+
+  <div class="side-art" aria-hidden="true">
+    <svg viewBox="0 0 520 520" width="100%" height="100%">
+
+      <defs>
+        <radialGradient id="bgGlow" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stop-color="#4DA3FF" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#1F2024" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <rect width="520" height="520" rx="32" fill="#1F2024"/>
+      <circle cx="260" cy="220" r="220" fill="url(#bgGlow)"/>
+
+      <!-- Network -->
+      <g stroke="#4DA3FF" stroke-width="2" opacity="0.6">
+        <line x1="260" y1="180" x2="180" y2="260"/>
+        <line x1="260" y1="180" x2="340" y2="260"/>
+        <line x1="180" y1="260" x2="340" y2="260"/>
+        <line x1="260" y1="180" x2="260" y2="320"/>
+      </g>
+
+      <g fill="#4DA3FF">
+        <circle cx="260" cy="180" r="10"/>
+        <circle cx="180" cy="260" r="8"/>
+        <circle cx="340" cy="260" r="8"/>
+        <circle cx="260" cy="320" r="8"/>
+      </g>
+
+      <!-- Shield -->
+      <g transform="translate(220 210)">
+        <path d="M40 0 L80 20 L80 60 C80 90 40 110 40 110 C40 110 0 90 0 60 L0 20 Z"
+              fill="rgba(77,163,255,0.15)"
+              stroke="#4DA3FF"
+              stroke-width="3"/>
+        <path d="M40 28 a12 12 0 0 1 12 12 v6 h-24 v-6 a12 12 0 0 1 12-12"
+              fill="none" stroke="#4DA3FF" stroke-width="3"/>
+        <rect x="28" y="46" width="24" height="20" rx="5"
+              fill="none" stroke="#4DA3FF" stroke-width="3"/>
+      </g>
+
+    </svg>
+  </div>
+
+  <div class="side-text">
+    <h2>Secure Currency Verification</h2>
+    <p>Log in to upload notes, view results, and download reports.</p>
+    <div class="side-badges">
+      <span>AI Scan</span>
+      <span>Report PDF</span>
+      <span>Manual Checks</span>
+    </div>
+  </div>
+
+</aside>
+
+  <!-- RIGHT SIDE (FORM) -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1>Welcome back</h1>
+      <p class="subtitle">Sign in to continue</p>
+
+      <form id="loginForm">
+        <div class="input-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Your password" required />
+        </div>
+
+        <button type="submit" class="primary-btn" id="loginBtn">Login</button>
+      </form>
+
+      <p class="switch">
+        Don’t have an account?
+        <a href="register.html">Create one</a>
+      </p>
+    </div>
+  </main>
+</div>
+
+<script>
+const form = document.getElementById("loginForm");
+const btn = document.getElementById("loginBtn");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = form.elements["email"].value.trim();
+  const password = form.elements["password"].value.trim();
+
+  btn.disabled = true;
+  btn.textContent = "Logging in...";
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Login failed");
+      btn.disabled = false;
+      btn.textContent = "Login";
+      return;
+    }
+
+    localStorage.setItem("isLoggedIn", "true");
+    if (data.user) {
+      localStorage.setItem("profileData", JSON.stringify(data.user));
+    }
+    window.location.href = "index.html";
+
+  } catch (err) {
+    alert("Backend not reachable. Keep Django server running.");
+    btn.disabled = false;
+    btn.textContent = "Login";
+  }
+});
+</script>
+
+</body>
+</html>

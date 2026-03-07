@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | Fake Currency Detection</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- LEFT SIDE (NEW REGISTER IMAGE) -->
+  <aside class="auth-side">
+    <div class="side-glow"></div>
+
+    <!-- New aesthetic SVG: ID-card + verified tick (minimal, no cartoon) -->
+    <div class="side-art" aria-hidden="true">
+      <svg viewBox="0 0 520 520" width="100%" height="100%" role="img">
+        <defs>
+          <linearGradient id="bgReg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2E2F35"/>
+            <stop offset="100%" stop-color="#1F2024"/>
+          </linearGradient>
+
+          <radialGradient id="glowReg" cx="65%" cy="25%" r="70%">
+            <stop offset="0%" stop-color="#4DA3FF" stop-opacity="0.55"/>
+            <stop offset="55%" stop-color="#4DA3FF" stop-opacity="0.16"/>
+            <stop offset="100%" stop-color="#0B0C10" stop-opacity="0"/>
+          </radialGradient>
+
+          <filter id="shadowReg" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000" flood-opacity="0.55"/>
+          </filter>
+        </defs>
+
+        <rect x="0" y="0" width="520" height="520" rx="32" fill="url(#bgReg)"/>
+        <circle cx="360" cy="145" r="220" fill="url(#glowReg)"/>
+
+        <!-- Main card -->
+        <g filter="url(#shadowReg)" transform="translate(105 120)">
+          <rect width="310" height="330" rx="26" fill="#24252A" stroke="rgba(255,255,255,0.06)"/>
+
+          <!-- ID header -->
+          <rect x="26" y="26" width="190" height="22" rx="11" fill="rgba(255,255,255,0.06)"/>
+          <rect x="26" y="60" width="250" height="14" rx="7" fill="rgba(255,255,255,0.05)"/>
+
+          <!-- Avatar -->
+          <circle cx="86" cy="140" r="34" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.10)"/>
+          <path d="M52 220c7-28 29-44 68-44s61 16 68 44"
+                fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="12" stroke-linecap="round"/>
+
+          <!-- Lines -->
+          <rect x="150" y="120" width="130" height="14" rx="7" fill="rgba(255,255,255,0.05)"/>
+          <rect x="150" y="148" width="100" height="14" rx="7" fill="rgba(255,255,255,0.05)"/>
+          <rect x="26"  y="252" width="200" height="14" rx="7" fill="rgba(255,255,255,0.05)"/>
+          <rect x="26"  y="278" width="240" height="14" rx="7" fill="rgba(255,255,255,0.05)"/>
+
+          <!-- Verified badge -->
+          <g transform="translate(220 238)">
+            <rect width="64" height="64" rx="18" fill="rgba(77,163,255,0.10)" stroke="rgba(77,163,255,0.28)"/>
+            <path d="M20 34l10 10 20-24" fill="none" stroke="#4DA3FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- small pulse -->
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(77,163,255,0.25)">
+              <animate attributeName="r" values="20;28;20" dur="2.6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.15;0.55;0.15" dur="2.6s" repeatCount="indefinite"/>
+            </circle>
+          </g>
+        </g>
+
+        <!-- Small animated dots -->
+        <g fill="rgba(255,255,255,0.10)">
+          <circle cx="90" cy="92" r="4">
+            <animate attributeName="opacity" values="0.15;0.55;0.15" dur="2.6s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="455" cy="120" r="3">
+            <animate attributeName="opacity" values="0.10;0.45;0.10" dur="3.1s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="110" cy="430" r="3">
+            <animate attributeName="opacity" values="0.10;0.50;0.10" dur="2.9s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+      </svg>
+    </div>
+
+    <div class="side-text">
+      <h2>Create your account</h2>
+      <p>Register to access AI verification, history tracking, and report downloads.</p>
+      <div class="side-badges">
+        <span>Secure</span><span>Fast</span><span>Reports</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT SIDE (FORM) -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <h1>Create account</h1>
+      <p class="subtitle">Start verifying currency securely</p>
+
+      <form id="registerForm" novalidate>
+        <div class="input-group">
+          <label>Full Name</label>
+          <input type="text" name="name" placeholder="Your full name" required />
+        </div>
+
+        <div class="input-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="input-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="+91 XXXXX XXXXX" required />
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Create a strong password" required />
+        </div>
+
+        <button type="submit" class="primary-btn" id="registerBtn">Register</button>
+      </form>
+
+      <div class="success-msg" id="successMsg">
+        ✅ Registration completed successfully <br />
+        Redirecting to login…
+      </div>
+
+      <p class="switch">
+        Already have an account?
+        <a href="login.html">Login here</a>
+      </p>
+    </div>
+  </main>
+</div>
+
+<script>
+  const form = document.getElementById("registerForm");
+  const btn  = document.getElementById("registerBtn");
+  const msg  = document.getElementById("successMsg");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = form.elements["name"].value.trim();
+    const email = form.elements["email"].value.trim();
+    const phone = form.elements["phone"].value.trim();
+    const password = form.elements["password"].value.trim();
+
+    if (!name || !email || !phone || !password) {
+      alert("Please fill all fields.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Registering...";
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/register/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, password }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        alert(data.error || "Registration failed");
+        btn.disabled = false;
+        btn.textContent = "Register";
+        return;
+      }
+
+      // success
+      msg.classList.add("show");
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1200);
+
+    } catch (err) {
+      alert("Backend not reachable. Start Django server: python manage.py runserver");
+      btn.disabled = false;
+      btn.textContent = "Register";
+    }
+  });
+</script>
+
+</body>
+</html>

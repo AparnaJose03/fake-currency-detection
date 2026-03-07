@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report Fake Note | Fake Currency Detection</title>
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+<script>
+  if (!localStorage.getItem("isLoggedIn")) {
+    window.location.href = "login.html";
+  }
+</script>
+
+<header class="navbar">
+  <div class="brand">
+    <img src="logo.png" alt="Logo">
+    <span>Fake Currency Detection</span>
+  </div>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="safety.html">Safety & Awareness</a>
+    <a href="history.html">History</a>
+    <a href="report.html" class="active">Report</a>
+    <a href="help.html">Help</a>
+    <a href="profile.html" class="profile">Profile</a>
+    <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+  </nav>
+</header>
+
+<section class="page-hero">
+  <span class="hero-tag">Incident Reporting</span>
+  <h1 class="page-title">Report Suspected Fake Note</h1>
+  <p class="page-sub">
+    Submit details if your test result indicates a fake currency note.
+  </p>
+</section>
+
+<section class="content-wrap">
+  <div class="card" style="max-width:760px; margin:0 auto;">
+    <h2>Report Form</h2>
+    <p class="muted">Your latest detection is auto-filled when available.</p>
+
+    <form id="reportForm" style="margin-top:14px;">
+      <div class="grid-2">
+        <div>
+          <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Name</label>
+          <input id="rName" required
+                 style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none;">
+        </div>
+
+        <div>
+          <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Email</label>
+          <input id="rEmail" type="email" required
+                 style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none;">
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:14px;">
+        <div>
+          <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Detected Result</label>
+          <input id="rResult" readonly
+                 style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.45); color:#E6E6E6; outline:none;">
+        </div>
+
+        <div>
+          <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Confidence</label>
+          <input id="rConfidence" readonly
+                 style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.45); color:#E6E6E6; outline:none;">
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label style="display:block; margin-bottom:8px; color:#B8BCC2;">Additional Details</label>
+        <textarea id="rMessage" required rows="4"
+                  style="width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background: rgba(31,32,36,0.70); color:#E6E6E6; outline:none; resize:vertical;"></textarea>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button class="secondary-btn" type="submit">Submit Report</button>
+        <div id="reportStatus" class="muted" style="font-size:13px;"></div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<footer>
+  © 2026 Fake Currency Detection System | Final Year Project
+</footer>
+
+<script>
+  const reportForm = document.getElementById("reportForm");
+  const reportStatus = document.getElementById("reportStatus");
+
+  function loadDetectionDraft() {
+    try {
+      const raw = localStorage.getItem("latestDetection");
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      document.getElementById("rResult").value = d.result || "UNKNOWN";
+      document.getElementById("rConfidence").value = d.confidence ? d.confidence + "%" : "-";
+      const baseMsg = [
+        "Possible counterfeit note detected.",
+        "File: " + (d.file || "N/A"),
+        "Detected at: " + (d.detected_at || "-"),
+      ].join("\n");
+      document.getElementById("rMessage").value = baseMsg;
+    } catch (e) {
+      // ignore bad local cache
+    }
+  }
+
+  async function loadProfileBasics() {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/me/", {
+        method: "GET",
+        credentials: "include"
+      });
+      if (!res.ok) return;
+      const u = await res.json();
+      document.getElementById("rName").value = u.full_name || u.username || "";
+      document.getElementById("rEmail").value = u.email || "";
+    } catch (e) {
+      // keep manual input
+    }
+  }
+
+  reportForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const result = (document.getElementById("rResult").value || "UNKNOWN").toUpperCase();
+    const confidence = document.getElementById("rConfidence").value || "-";
+    const payload = {
+      name: document.getElementById("rName").value.trim(),
+      email: document.getElementById("rEmail").value.trim(),
+      topic: "Fake Note Report",
+      message:
+        document.getElementById("rMessage").value.trim() +
+        "\n\nResult: " + result +
+        "\nConfidence: " + confidence
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/help/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        reportStatus.textContent = data.error || "Failed to submit report.";
+        return;
+      }
+
+      const historyKey = "reportHistory";
+      const existing = JSON.parse(localStorage.getItem(historyKey) || "[]");
+      existing.unshift({
+        ticket_id: data.ticket_id,
+        result: result,
+        confidence: confidence,
+        message: document.getElementById("rMessage").value.trim(),
+        created_at: new Date().toISOString()
+      });
+      localStorage.setItem(historyKey, JSON.stringify(existing.slice(0, 50)));
+
+      reportStatus.textContent = "Report submitted. Ticket ID: " + data.ticket_id;
+      setTimeout(() => {
+        reportStatus.textContent = "";
+      }, 5000);
+    } catch (err) {
+      reportStatus.textContent = "Backend not reachable. Start Django server.";
+    }
+  });
+
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    await fetch("http://127.0.0.1:8000/api/logout/", {
+      method: "GET",
+      credentials: "include"
+    });
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("profileData");
+    window.location.href = "login.html";
+  });
+
+  loadDetectionDraft();
+  loadProfileBasics();
+</script>
+
+</body>
+</html>
