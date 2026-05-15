@@ -532,6 +532,54 @@ footer {
     margin-bottom: 28px;
 }
 
+/* File picker (Choose File) */
+.file-picker {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.file-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 26px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #3A3D45, #2F3238);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #E6E6E6;
+    font-size: 13.5px;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 8px 18px rgba(0,0,0,0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.file-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(77,163,255,0.35);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        0 12px 24px rgba(0,0,0,0.45);
+}
+
+.file-btn:active {
+    transform: translateY(0);
+}
+
 /* Button */
 .upload-btn {
     padding: 14px 42px;

@@ -82,11 +82,14 @@
     <p class="upload-text">Upload a clear image to verify authenticity</p>
 
     <div id="detectForm" novalidate>
-      <input type="file" id="fileInput" name="image" accept="image/*">
+      <div class="file-picker">
+        <input class="file-input" type="file" id="fileInput" name="image" accept="image/*">
+        <label class="file-btn" for="fileInput">Choose File</label>
+      </div>
       <button class="upload-btn" id="uploadBtn" type="button" disabled>Verify Image</button>
     </div>
 
-    <p class="file-status" id="fileStatus">Choose an image file first</p>
+    <p class="file-status" id="fileStatus">No file chosen</p>
 
     <div class="processing" id="processing" style="display:none;">
       🔄 Analyzing currency image...
@@ -102,34 +105,19 @@
       </div>
       <h3 class="result-text">Result: <span class="fake">FAKE</span></h3>
       <p class="confidence">Confidence: 94%</p>
-      <div class="result-details-wrap" id="resultDetailsWrap" style="display:none;">
-        <button class="details-toggle-btn" id="detailsToggleBtn" type="button" aria-expanded="false">Show details</button>
-        <div class="details-panel" id="detailsPanel" style="display:none;">
-          <div class="classifier-summary" id="classifierSummary" style="display:none;">
-            <h4>Classifier Scores (decision basis)</h4>
-            <p class="classifier-line">Real: <b id="realScoreText">0.00%</b> | Fake: <b id="fakeScoreText">0.00%</b></p>
-          </div>
-          <div class="factor-summary" id="factorSummary" style="display:none;">
-            <h4>Image/Feature Visibility Indicators</h4>
-            <div id="factorList"></div>
-            <p class="factor-note">These indicators do not decide REAL/FAKE. They only reflect image and feature visibility quality.</p>
-          </div>
-        </div>
-      </div>
-
       <div class="result-actions">
         <button class="report-btn" id="downloadReportBtn" type="button">Download Report (PDF)</button>
         <button class="report-btn" id="raiseFakeReportBtn" type="button">Report Fake Note</button>
       </div>
     </div>
 
-  </div>
-</section>
-
 <!-- MANUAL SUPPORT (OLD BULLET POINTS ONLY) -->
 <section class="manual-section">
 
-  <button class="manual-btn" id="manualBtn" type="button">
+  <button class="manual-btn" id="manualBtn
+
+  </div>
+</section>" type="button">
     Manual Currency Identification
   </button>
 
@@ -354,7 +342,7 @@
         resultImagePreview.style.display = "none";
       }
     } else {
-      statusText.textContent = "No file selected";
+      statusText.textContent = "No file chosen";
       uploadBtn.disabled = true;
       renderClassifierScores(null);
       renderFactors([]);
@@ -373,7 +361,7 @@
 
     const selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
     if (!selectedFile) {
-      statusText.textContent = "No file selected";
+      statusText.textContent = "No file chosen";
       alert("Please choose an image first.");
       return;
     }

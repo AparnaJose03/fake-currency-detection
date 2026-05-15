@@ -1,5 +1,5 @@
-venv/
 __pycache__/
+media/
 *.pyc
-.env
-dataset/
+db.sqlite3
+venv/

@@ -21,6 +21,7 @@ class Verification(models.Model):
 class Report(models.Model):
     verification = models.OneToOneField(Verification, on_delete=models.CASCADE, related_name="report")
     pdf_file = models.FileField(upload_to="reports/")
+  
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

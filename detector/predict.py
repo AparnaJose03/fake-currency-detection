@@ -23,6 +23,7 @@ def predict_currency(img_path):
     predicted_class_idx = np.argmax(predictions[0])
     confidence = float(np.max(predictions[0]))
     class_scores = {
+ 
         "fake": float(predictions[0][0]),
         "real": float(predictions[0][1]),
     }
